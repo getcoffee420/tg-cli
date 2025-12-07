@@ -4,9 +4,14 @@ project(tg-cli CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_executable(tg-cli
-        src/main.cpp
+add_library(tg-cli-lib
+        src/label/Label.cpp
 )
+
+add_executable(tg-cli main/main.cpp)
+
+add_executable(tests tests/test.cpp
+        tests/label/Label.cpp)
 
 # По умолчанию ищем TDLib в сабмодуле
 set(DEFAULT_TDLIB_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/third_party/td/tdlib")
@@ -30,6 +35,22 @@ target_link_directories(tg-cli PRIVATE
 )
 
 target_link_libraries(tg-cli
+        tg-cli-lib
         tdjson
         pthread
 )
+
+enable_testing()
+
+include(FetchContent)
+FetchContent_Declare(
+        googletest
+        URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip
+)
+FetchContent_MakeAvailable(googletest)
+
+target_link_libraries(tests PRIVATE tg-cli-lib gtest_main)
+target_include_directories(tg-cli-lib PUBLIC src)
+
+include(GoogleTest)
+gtest_discover_tests(tests)
