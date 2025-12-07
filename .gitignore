@@ -27,11 +27,10 @@ Makefile
 # Logs
 *.log
 
-# TDLib artifacts (если вдруг будешь собирать рядом)
-tdlib/
-tdlib_build/
-tdlib_install/
-
 # OS-shit
 .DS_Store
 Thumbs.db
+
+# TDLib build files
+third_party/td/build/
+third_party/td/tdlib/
