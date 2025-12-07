@@ -1,0 +1,36 @@
+# CLion / IntelliJ
+.idea/
+*.iml
+
+# CMake build directories
+cmake-build-*/
+build/
+out/
+
+# CMake cache
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+
+# Compiled binaries
+*.o
+*.obj
+*.lo
+*.la
+*.a
+*.so
+*.dll
+*.dylib
+*.exe
+
+# Logs
+*.log
+
+# OS-shit
+.DS_Store
+Thumbs.db
+
+# TDLib build files
+third_party/td/build/
+third_party/td/tdlib/
