@@ -21,7 +21,7 @@ jobs:
         run: |
           sudo apt update
           sudo apt install -y make git zlib1g-dev libssl-dev gperf php-cli cmake \
-                              clang-18 libc++-18-dev libc++abi-18-dev
+                              clang-14 libc++-14-dev libc++abi-14-dev
 
       - name: Cache TDLib build
         id: cache-tdlib
@@ -40,9 +40,8 @@ jobs:
           mkdir build
           cd build
 
-          CXXFLAGS="-stdlib=libc++" \
-          CC=/usr/bin/clang-18 \
-          CXX=/usr/bin/clang++-18 \
+          CXXFLAGS="-stdlib=libc++" CC=/usr/bin/clang-14 CXX=/usr/bin/clang++-14 cmake \
+          -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX:PATH=../tdlib ..
           cmake -DCMAKE_BUILD_TYPE=Release \
                 -DCMAKE_INSTALL_PREFIX:PATH=../tdlib ..
 
@@ -69,7 +68,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt update
-          sudo apt install -y cmake clang-18 libc++-18-dev libc++abi-18-dev
+          sudo apt install -y cmake clang-14 libc++-14-dev libc++abi-14-dev
 
       - name: Download TDLib artifact
         uses: actions/download-artifact@v4
@@ -104,7 +103,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt update
-          sudo apt install -y cmake clang-18 libc++-18-dev libc++abi-18-dev
+          sudo apt install -y cmake clang-14 libc++-14-dev libc++abi-14-dev
 
       - name: Download TDLib
         uses: actions/download-artifact@v4
@@ -117,6 +116,10 @@ jobs:
         with:
           name: built-binaries
           path: cmake-build-debug
+
+      - name: Setup
+        run: |
+          chmod +x cmake-build-debug/tests
 
       - name: Run tests
         run: ctest --test-dir cmake-build-debug --output-on-failure
