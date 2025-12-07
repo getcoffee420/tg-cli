@@ -1,0 +1,122 @@
+name: Unit testing
+
+on:
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-tdlib:
+    runs-on: ubuntu-22.04
+    outputs:
+      tdlib-dir: ${{ steps.cache-tdlib.outputs.dir }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y make git zlib1g-dev libssl-dev gperf php-cli cmake \
+                              clang-18 libc++-18-dev libc++abi-18-dev
+
+      - name: Cache TDLib build
+        id: cache-tdlib
+        uses: actions/cache@v4
+        with:
+          path: third_party/td/tdlib
+          key: tdlib-${{ hashFiles('third_party/td/**') }}
+          restore-keys: |
+            tdlib-
+
+      - name: Build TDLib (only if cache missed)
+        if: steps.cache-tdlib.outputs.cache-hit != 'true'
+        run: |
+          cd third_party/td
+          rm -rf build
+          mkdir build
+          cd build
+
+          CXXFLAGS="-stdlib=libc++" \
+          CC=/usr/bin/clang-18 \
+          CXX=/usr/bin/clang++-18 \
+          cmake -DCMAKE_BUILD_TYPE=Release \
+                -DCMAKE_INSTALL_PREFIX:PATH=../tdlib ..
+
+          cmake --build . --target install -j$(nproc)
+
+      - name: Upload TDLib artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tdlib
+          path: third_party/td/tdlib
+          retention-days: 3
+
+
+  build:
+    runs-on: ubuntu-22.04
+    needs: build-tdlib
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y cmake clang-18 libc++-18-dev libc++abi-18-dev
+
+      - name: Download TDLib artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: tdlib
+          path: third_party/td/tdlib
+
+      - name: Configure CMake
+        run: |
+          cmake -S . -B cmake-build-debug
+
+      - name: Build
+        run: cmake --build cmake-build-debug -j$(nproc)
+
+      - name: Upload build (artifact)
+        uses: actions/upload-artifact@v4
+        with:
+          name: built-binaries
+          path: cmake-build-debug
+
+
+  run-tests:
+    runs-on: ubuntu-22.04
+    needs: build
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y cmake clang-18 libc++-18-dev libc++abi-18-dev
+
+      - name: Download TDLib
+        uses: actions/download-artifact@v4
+        with:
+          name: tdlib
+          path: third_party/td/tdlib
+
+      - name: Download built artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: built-binaries
+          path: cmake-build-debug
+
+      - name: Run tests
+        run: ctest --test-dir cmake-build-debug --output-on-failure
