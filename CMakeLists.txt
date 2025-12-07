@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 project(tg-cli CXX)
+cmake_policy(SET CMP0135 NEW)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -29,6 +30,10 @@ add_library(tg-cli-lib
         src/label/Label.cpp
 )
 
+add_library(tg-cli-client
+        src/tgClient/tgClient.cpp
+)
+
 add_executable(tg-cli main/main.cpp)
 
 add_executable(tests tests/test.cpp
@@ -47,6 +52,10 @@ if (NOT EXISTS "${TDLIB_ROOT}/include/td" OR NOT EXISTS "${TDLIB_ROOT}/lib")
     )
 endif()
 
+set(Td_DIR "${TDLIB_ROOT}/lib/cmake/Td")
+find_package(Td REQUIRED)
+
+
 target_include_directories(tg-cli PRIVATE
         ${TDLIB_ROOT}/include
 )
@@ -57,9 +66,11 @@ target_link_directories(tg-cli PRIVATE
 
 target_link_libraries(tg-cli
         tg-cli-lib
-        tdjson
+        Td::TdStatic
         pthread
 )
+
+
 
 enable_testing()
 
