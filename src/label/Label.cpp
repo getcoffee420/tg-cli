@@ -3,6 +3,7 @@
 //
 
 #include "Label.h"
+#include <cmath>
 
 std::vector<std::string> generate_labels(const size_t number) {
     constexpr size_t alphabet_size = 26;
