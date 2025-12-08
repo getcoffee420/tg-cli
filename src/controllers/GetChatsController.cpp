@@ -2,8 +2,9 @@
 #include "GetChatsController.h"
 #include <iostream>
 #include <algorithm>
-#include <stdexcept>
 #include <ctime>
+#include <cstring>
+#include <stdexcept>
 
 ChatsController::ChatsController(ITgClient& client)
     : client_(client)

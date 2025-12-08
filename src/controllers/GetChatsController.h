@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <functional>
 #include "../tgClient/ITgClient.hpp"
 
 class ChatsController {
