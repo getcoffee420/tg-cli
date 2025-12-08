@@ -23,7 +23,7 @@ public:
     AuthController(const AuthController&) = delete;
     AuthController& operator=(const AuthController&) = delete;
 
-    ~AuthController() = default;
+    ~AuthController();
 
     // Основные методы
     bool login(const std::string& phone_number, const std::string& code = "");
