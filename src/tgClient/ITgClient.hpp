@@ -10,13 +10,7 @@ protected:
         std::string chatId;
     };
 
-    struct Message {
-        std::string messageID;
-        std::string text;
-        std::string chatId;
-        std::string sender;
-    };
-
+public:
     enum class AuthState {
         WaitingPhone,
         WaitingCode,
@@ -25,7 +19,13 @@ protected:
         Error,
     };
 
-public:
+    struct Message {
+        std::string messageID;
+        std::string text;
+        std::string chatId;
+        std::string sender;
+    };
+
     ITgClient() = default;
 
     virtual ~ITgClient() = default;
