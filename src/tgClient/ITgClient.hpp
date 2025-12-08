@@ -5,12 +5,13 @@ class ITgClient {
 protected:
     int is_authorized = 0;
 
+public:
     struct Chat {
         std::string title;
         std::string chatId;
     };
 
-public:
+
     enum class AuthState {
         WaitingPhone,
         WaitingCode,
