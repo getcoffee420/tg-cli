@@ -1,6 +1,6 @@
-#include "../src/tgClient/tgClient.cpp"
+#include "../src/tgClient/ITgClient.hpp"
+#include <iostream>
 
 int main() {
-  tgClient example;
-  example.loop();
+    std::cout << "Hello World!" << std::endl;
 }

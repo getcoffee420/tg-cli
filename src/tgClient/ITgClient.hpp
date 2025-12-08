@@ -1,4 +1,3 @@
-#pragma once
 #include <string>
 #include <vector>
 
@@ -6,21 +5,9 @@ class ITgClient {
 protected:
     int is_authorized = 0;
 
-public:
     struct Chat {
         std::string title;
         std::string chatId;
-    };
-
-
-    enum class AuthState {
-        WaitingPhone,
-        WaitingCode,
-        WaitingPassword,
-        WaitingTdlibParameters,
-        Ready,
-        LoggingOut,
-        Error,
     };
 
     struct Message {
@@ -30,6 +17,15 @@ public:
         std::string sender;
     };
 
+    enum class AuthState {
+        WaitingPhone,
+        WaitingCode,
+        Ready,
+        LoggingOut,
+        Error,
+    };
+
+public:
     ITgClient() = default;
 
     virtual ~ITgClient() = default;
@@ -41,8 +37,6 @@ public:
     virtual void enter_message_code(std::string) = 0;
 
     virtual void log_out() = 0;
-
-    virtual void send_tdlib_parameters() = 0;
 
     virtual std::vector<Chat> get_chats(int limit) = 0;
 
