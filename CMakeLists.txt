@@ -30,16 +30,11 @@ add_library(tg-cli-lib
         src/label/Label.cpp
 )
 
-add_library(tg-cli-client
-        src/tgClient/tgClient.cpp
-)
-
 add_executable(tg-cli main/main.cpp)
 
 add_executable(tests tests/test.cpp
         tests/label/Label.cpp)
 
-# По умолчанию ищем TDLib в сабмодуле
 set(DEFAULT_TDLIB_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/third_party/td/tdlib")
 
 set(TDLIB_ROOT "${DEFAULT_TDLIB_ROOT}" CACHE PATH
@@ -69,8 +64,6 @@ target_link_libraries(tg-cli
         Td::TdStatic
         pthread
 )
-
-
 
 enable_testing()
 
