@@ -28,6 +28,7 @@ endif()
 
 add_library(tg-cli-lib
         src/label/Label.cpp
+        src/tgClient/TgClientTdlib.cpp
 )
 
 add_executable(tg-cli main/main.cpp
@@ -35,6 +36,8 @@ add_executable(tg-cli main/main.cpp
 
 add_executable(tests tests/test.cpp
         tests/label/Label.cpp)
+
+add_executable(core_test core_test/main.cpp)
 
 set(DEFAULT_TDLIB_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/third_party/td/tdlib")
 
@@ -60,10 +63,31 @@ target_link_directories(tg-cli PRIVATE
         ${TDLIB_ROOT}/lib
 )
 
-target_link_libraries(tg-cli
-        tg-cli-lib
+target_link_libraries(core_test PRIVATE tg-cli-lib)
+
+target_include_directories(core_test PRIVATE
+        ${TDLIB_ROOT}/include
+)
+
+target_link_directories(core_test PRIVATE
+        ${TDLIB_ROOT}/lib
+)
+
+target_link_libraries(tg-cli-lib
         Td::TdStatic
         pthread
+)
+
+target_link_libraries(tg-cli
+        tg-cli-lib
+)
+
+target_include_directories(tg-cli-lib PRIVATE
+        ${TDLIB_ROOT}/include
+)
+
+target_link_directories(tg-cli-lib PRIVATE
+        ${TDLIB_ROOT}/lib
 )
 
 enable_testing()
