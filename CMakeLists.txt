@@ -4,6 +4,27 @@ project(tg-cli CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+set(ENV_FILE "${CMAKE_SOURCE_DIR}/.env")
+
+if(EXISTS "${ENV_FILE}")
+    file(READ "${ENV_FILE}" ENV_CONTENTS)
+
+    string(REPLACE "\n" ";" ENV_LINES "${ENV_CONTENTS}")
+
+    foreach(line ${ENV_LINES})
+        if(line MATCHES "^#.*" OR line STREQUAL "")
+            continue()
+        endif()
+
+        string(REGEX MATCH "^[A-Za-z_][A-Za-z0-9_]*" KEY "${line}")
+        string(REPLACE "${KEY}=" "" VALUE "${line}")
+
+        set(${KEY} "${VALUE}")
+
+        add_compile_definitions(${KEY}="${VALUE}")
+    endforeach()
+endif()
+
 add_library(tg-cli-lib
         src/label/Label.cpp
 )

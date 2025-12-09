@@ -34,3 +34,6 @@ Thumbs.db
 # TDLib build files
 third_party/td/build/
 third_party/td/tdlib/
+
+# ENV
+.env
