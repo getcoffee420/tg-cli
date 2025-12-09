@@ -19,8 +19,8 @@ private:
 public:
     explicit AuthController(ITgClient& client);
     
-    AuthController(const AuthController&) = delete;
-    AuthController& operator=(const AuthController&) = delete;
+    //AuthController(const AuthController&) = default
+    //AuthController& operator=(const AuthController&) = default;
 
     ~AuthController();
 

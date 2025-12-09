@@ -17,13 +17,13 @@ void ChatHistoryController::clear_target_chat_id() {
     target_chat_id.clear();
 }
     
-std::vector<ITgClient::Message> ChatHistoryController::get_target_chat_history(int limit = 20) {
+std::vector<ITgClient::Message> ChatHistoryController::get_target_chat_history(int limit) {
     if (target_chat_id.empty()) {
         return {};
     }
     return tgClient.get_chat_history(target_chat_id, limit);
 }
     
-std::vector<ITgClient::Message> ChatHistoryController::get_chat_history(const std::string& chatId, int limit = 20) {
+std::vector<ITgClient::Message> ChatHistoryController::get_chat_history(const std::string& chatId, int limit) {
     return tgClient.get_chat_history(chatId, limit);
 }
