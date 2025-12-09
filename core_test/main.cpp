@@ -3,7 +3,6 @@
 #include "../src/controllers/GetChatsController.h"
 #include <iostream>
 #include <sstream>
-#include <thread>
 
 static std::string auth_state_to_string(ITgClient::AuthState state) {
     using S = ITgClient::AuthState;

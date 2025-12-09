@@ -1,7 +1,6 @@
 // controllers/messagecontroller.h
 #pragma once
 #include <string>
-#include <vector>
 #include <functional>
 #include "../tgClient/ITgClient.hpp"
 

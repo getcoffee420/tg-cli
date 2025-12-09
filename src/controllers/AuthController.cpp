@@ -2,7 +2,6 @@
 #include "AuthController.h"
 #include <iostream>
 #include <stdexcept>
-#include <algorithm>
 
 // Конструктор
 AuthController::AuthController(ITgClient& client)

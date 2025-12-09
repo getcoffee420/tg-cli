@@ -1,21 +1,30 @@
 cmake_minimum_required(VERSION 3.16)
 project(tg-cli CXX)
-cmake_policy(SET CMP0135 NEW)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+include(FetchContent)
+FetchContent_Declare(
+        googletest
+        URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip
+)
+FetchContent_MakeAvailable(googletest)
+
+enable_testing()
+include(GoogleTest)
+
 set(ENV_FILE "${CMAKE_SOURCE_DIR}/.env")
 
-if(EXISTS "${ENV_FILE}")
+if (EXISTS "${ENV_FILE}")
     file(READ "${ENV_FILE}" ENV_CONTENTS)
 
     string(REPLACE "\n" ";" ENV_LINES "${ENV_CONTENTS}")
 
-    foreach(line ${ENV_LINES})
-        if(line MATCHES "^#.*" OR line STREQUAL "")
+    foreach (line ${ENV_LINES})
+        if (line MATCHES "^#.*" OR line STREQUAL "")
             continue()
-        endif()
+        endif ()
 
         string(REGEX MATCH "^[A-Za-z_][A-Za-z0-9_]*" KEY "${line}")
         string(REPLACE "${KEY}=" "" VALUE "${line}")
@@ -23,21 +32,8 @@ if(EXISTS "${ENV_FILE}")
         set(${KEY} "${VALUE}")
 
         add_compile_definitions(${KEY}="${VALUE}")
-    endforeach()
-endif()
-
-add_library(tg-cli-lib
-        src/label/Label.cpp
-        src/tgClient/TgClientTdlib.cpp
-)
-
-add_executable(tg-cli main/main.cpp
-        src/tgClient/TgClientTdlib.cpp)
-
-add_executable(tests tests/test.cpp
-        tests/label/Label.cpp)
-
-add_executable(core_test core_test/main.cpp)
+    endforeach ()
+endif ()
 
 set(DEFAULT_TDLIB_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/third_party/td/tdlib")
 
@@ -49,58 +45,78 @@ if (NOT EXISTS "${TDLIB_ROOT}/include/td" OR NOT EXISTS "${TDLIB_ROOT}/lib")
             "TDLib not found at TDLIB_ROOT='${TDLIB_ROOT}'. "
             "Did you run TDLib build & install in third_party/td?"
     )
-endif()
+endif ()
 
 set(Td_DIR "${TDLIB_ROOT}/lib/cmake/Td")
-find_package(Td REQUIRED)
+find_package(Td 1.8.58 REQUIRED)
 
-
-target_include_directories(tg-cli PRIVATE
-        ${TDLIB_ROOT}/include
+# TG CLI LIB
+add_library(tg-cli-lib
+        src/label/Label.cpp
+        src/tgClient/TgClientTdlib.cpp
+        src/controllers/AuthController.cpp
+        src/controllers/GetChatsController.cpp
+        src/controllers/SendMessageController.cpp
 )
 
-target_link_directories(tg-cli PRIVATE
-        ${TDLIB_ROOT}/lib
+target_include_directories(tg-cli-lib
+        PUBLIC ${TDLIB_ROOT}/include
 )
 
-target_link_libraries(core_test PRIVATE tg-cli-lib)
-
-target_include_directories(core_test PRIVATE
-        ${TDLIB_ROOT}/include
-)
-
-target_link_directories(core_test PRIVATE
-        ${TDLIB_ROOT}/lib
+target_link_directories(tg-cli-lib
+        PUBLIC ${TDLIB_ROOT}/lib
 )
 
 target_link_libraries(tg-cli-lib
-        Td::TdStatic
-        pthread
+        PUBLIC Td::TdStatic
+)
+
+# TG CLI
+add_executable(tg-cli main/main.cpp)
+
+target_include_directories(tg-cli
+        PRIVATE src
+)
+
+target_link_directories(tg-cli
+        PRIVATE src
 )
 
 target_link_libraries(tg-cli
-        tg-cli-lib
+        PRIVATE tg-cli-lib
 )
 
-target_include_directories(tg-cli-lib PRIVATE
-        ${TDLIB_ROOT}/include
+# CORE TEST
+add_executable(core_test
+        core_test/main.cpp
 )
 
-target_link_directories(tg-cli-lib PRIVATE
-        ${TDLIB_ROOT}/lib
+target_include_directories(core_test
+        PRIVATE src
 )
 
-enable_testing()
-
-include(FetchContent)
-FetchContent_Declare(
-        googletest
-        URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip
+target_link_directories(core_test
+        PRIVATE src
 )
-FetchContent_MakeAvailable(googletest)
 
-target_link_libraries(tests PRIVATE tg-cli-lib gtest_main)
-target_include_directories(tg-cli-lib PUBLIC src)
+target_link_libraries(core_test
+        PRIVATE tg-cli-lib
+)
 
-include(GoogleTest)
+# TEST
+add_executable(tests tests/test.cpp
+        tests/label/Label.cpp
+)
+
+target_include_directories(tests
+        PRIVATE src
+)
+
+target_link_directories(tests
+        PRIVATE src
+)
+
+target_link_libraries(tests
+        PRIVATE tg-cli-lib gtest_main
+)
 gtest_discover_tests(tests)

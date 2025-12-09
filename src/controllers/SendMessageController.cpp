@@ -2,7 +2,6 @@
 #include "SendMessageController.h"
 #include <iostream>
 #include <stdexcept>
-#include <algorithm>
 
 MessageController::MessageController(ITgClient& client)
     : client_(client)
