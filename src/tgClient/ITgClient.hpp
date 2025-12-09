@@ -1,3 +1,4 @@
+#pragma once
 #include <string>
 #include <vector>
 
@@ -15,6 +16,8 @@ public:
     enum class AuthState {
         WaitingPhone,
         WaitingCode,
+        WaitingPassword,
+        WaitingTdlibParameters,
         Ready,
         LoggingOut,
         Error,
@@ -38,6 +41,8 @@ public:
     virtual void enter_message_code(std::string) = 0;
 
     virtual void log_out() = 0;
+
+    virtual void send_tdlib_parameters() = 0;
 
     virtual std::vector<Chat> get_chats(int limit) = 0;
 

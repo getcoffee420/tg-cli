@@ -30,7 +30,8 @@ add_library(tg-cli-lib
         src/label/Label.cpp
 )
 
-add_executable(tg-cli main/main.cpp)
+add_executable(tg-cli main/main.cpp
+        src/tgClient/TgClientTdlib.cpp)
 
 add_executable(tests tests/test.cpp
         tests/label/Label.cpp)
