@@ -6,6 +6,7 @@
 #include <sstream>
 #include <thread>
 #include <chrono>
+#include <iomanip>
 
 TgClientFacade::TgClientFacade(ITgClient& client) : client_(client) {
     client_.send_tdlib_parameters();
@@ -14,6 +15,7 @@ TgClientFacade::TgClientFacade(ITgClient& client) : client_(client) {
     }
 
     auth_controller_ = std::make_unique<AuthController>(client_);
+    chats_controller_ = std::make_unique<ChatsController>(client_);
 }
 
 std::string TgClientFacade::auth_state_to_string(ITgClient::AuthState state) {
@@ -40,6 +42,9 @@ void TgClientFacade::print_usage() {
         << "  tgcli login-phone <phone>\n"
         << "  tgcli login-code <code>\n"
         << "  tgcli logout\n"
+        << "  tgcli chats [--refresh]\n"
+        << "  tgcli search-chats <query>\n"
+        << "  tgcli chat-info <chat_id>\n"
         << "  tgcli send <chat_id> <message...>\n"
         << std::endl;
 }
@@ -160,6 +165,110 @@ int TgClientFacade::handle_logout() {
 
     return 0;
 }
+
+
+
+// =====================
+//   CHATS команды
+// =====================
+
+int TgClientFacade::handle_get_chats() {
+    if (!auth_controller_->is_authorized()) {
+        std::cerr << "[tgcli] Not authorized. Use login-phone/login-code first.\n";
+        return 1;
+    }
+
+    try {
+        auto chats = chats_controller_->get_chats(50);
+        
+        if (chats.empty()) {
+            std::cout << "[tgcli] No chats found\n";
+            return 0;
+        }
+        
+        std::cout << "[tgcli] Found " << chats.size() << " chats:\n";
+        std::cout << "========================================\n";
+        
+        for (size_t i = 0; i < chats.size(); ++i) {
+            const auto& chat = chats[i];
+            std::cout << std::setw(3) << (i + 1) << ". "
+                      << "ID: " << chat.chatId 
+                      << " | Title: " << chat.title << "\n";
+        }
+        
+        std::cout << "========================================\n";
+        
+    } catch (const std::exception& e) {
+        std::cerr << "[tgcli] get-chats error: " << e.what() << "\n";
+        return 1;
+    }
+
+    return 0;
+}
+
+int TgClientFacade::handle_search_chats(const std::string& query) {
+    if (!auth_controller_->is_authorized()) {
+        std::cerr << "[tgcli] Not authorized. Use login-phone/login-code first.\n";
+        return 1;
+    }
+
+    try {
+        auto chats = chats_controller_->search_chats(query, 20);
+        
+        if (chats.empty()) {
+            std::cout << "[tgcli] No chats found for query: " << query << "\n";
+            return 0;
+        }
+        
+        std::cout << "[tgcli] Found " << chats.size() 
+                  << " chats matching '" << query << "':\n";
+        std::cout << "========================================\n";
+        
+        for (size_t i = 0; i < chats.size(); ++i) {
+            const auto& chat = chats[i];
+            std::cout << std::setw(3) << (i + 1) << ". "
+                      << "ID: " << chat.chatId 
+                      << " | Title: " << chat.title << "\n";
+        }
+        
+        std::cout << "========================================\n";
+        
+    } catch (const std::exception& e) {
+        std::cerr << "[tgcli] search-chats error: " << e.what() << "\n";
+        return 1;
+    }
+
+    return 0;
+}
+
+int TgClientFacade::handle_chat_info(const std::string& chat_id) {
+    if (!auth_controller_->is_authorized()) {
+        std::cerr << "[tgcli] Not authorized. Use login-phone/login-code first.\n";
+        return 1;
+    }
+
+    try {
+        auto chat = chats_controller_->get_chat_info(chat_id);
+        
+        if (chat.chatId.empty()) {
+            std::cerr << "[tgcli] Chat not found: " << chat_id << "\n";
+            return 1;
+        }
+        
+        std::cout << "[tgcli] Chat info:\n";
+        std::cout << "  ID: " << chat.chatId << "\n";
+        std::cout << "  Title: " << chat.title << "\n";
+        
+    } catch (const std::exception& e) {
+        std::cerr << "[tgcli] chat-info error: " << e.what() << "\n";
+        return 1;
+    }
+
+    return 0;
+}
+
+
+
 
 // =====================
 //   send

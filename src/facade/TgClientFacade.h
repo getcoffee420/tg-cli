@@ -9,7 +9,7 @@ private:
     std::unique_ptr<AuthController> auth_controller_;
     //MessageController message_controller_;
     //ChatHistoryController history_controller_;
-    //ChatsController chats_controller_;
+    std::unique_ptr<ChatsController> chats_controller_;
     ITgClient& client_;
 
     static std::vector<std::string> collect_args(int argc, char** argv);
@@ -19,8 +19,12 @@ private:
     int handle_login_phone(const std::string& phone);
     int handle_login_code(const std::string& code);
     int handle_logout();
+
     int handle_send(const std::string& chat_id, const std::string& message);
 
+    int handle_get_chats();
+    int handle_search_chats(const std::string& query);
+    int handle_chat_info(const std::string& chat_id);
 
     
 public:
