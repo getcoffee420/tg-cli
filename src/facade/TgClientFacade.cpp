@@ -1,4 +1,3 @@
-
 #include <memory>
 #include "TgClientFacade.h"
 
@@ -16,6 +15,7 @@ TgClientFacade::TgClientFacade(ITgClient& client) : client_(client) {
 
     auth_controller_ = std::make_unique<AuthController>(client_);
     chats_controller_ = std::make_unique<ChatsController>(client_);
+    history_controller_ = std::make_unique<ChatHistoryController>(client_);
 }
 
 std::string TgClientFacade::auth_state_to_string(ITgClient::AuthState state) {
@@ -42,9 +42,12 @@ void TgClientFacade::print_usage() {
         << "  tgcli login-phone <phone>\n"
         << "  tgcli login-code <code>\n"
         << "  tgcli logout\n"
-        << "  tgcli chats [--refresh]\n"
+        << "  tgcli chats\n"
         << "  tgcli search-chats <query>\n"
         << "  tgcli chat-info <chat_id>\n"
+        << "  tgcli history <chat_id> [limit]\n"
+        << "  tgcli set-target <chat_id>\n"
+        << "  tgcli get-target-history [limit]\n"
         << "  tgcli send <chat_id> <message...>\n"
         << std::endl;
 }
@@ -78,6 +81,50 @@ int TgClientFacade::run(int argc, char** argv) {
             return handle_login_code(argv[2]);
         } else if (command == "logout") {
             return handle_logout();
+        } else if (command == "chats") {
+            return handle_get_chats();
+        } else if (command == "search-chats") {
+            if (argc < 3) {
+                std::cerr << "[tgcli] search-chats: query is required\n";
+                return 1;
+            }
+            return handle_search_chats(argv[2]);
+        } else if (command == "chat-info") {
+            if (argc < 3) {
+                std::cerr << "[tgcli] chat-info: chat_id is required\n";
+                return 1;
+            }
+            return handle_chat_info(argv[2]);
+        } else if (command == "history") {
+            if (argc < 3) {
+                std::cerr << "[tgcli] history: chat_id is required\n";
+                return 1;
+            }
+            int limit = 20;
+            if (argc >= 4) {
+                try {
+                    limit = std::stoi(argv[3]);
+                } catch (...) {
+                    std::cerr << "[tgcli] Invalid limit, using default 20\n";
+                }
+            }
+            return handle_history(argv[2], limit);
+        } else if (command == "set-target") {
+            if (argc < 3) {
+                std::cerr << "[tgcli] set-target: chat_id is required\n";
+                return 1;
+            }
+            return handle_set_target_chat(argv[2]);
+        } else if (command == "get-target-history") {
+            int limit = 20;
+            if (argc >= 3) {
+                try {
+                    limit = std::stoi(argv[2]);
+                } catch (...) {
+                    std::cerr << "[tgcli] Invalid limit, using default 20\n";
+                }
+            }
+            return handle_get_target_history(limit);
         } else if (command == "send") {
             if (argc < 4) {
                 std::cerr << "[tgcli] send: not enough arguments\n";
@@ -165,8 +212,6 @@ int TgClientFacade::handle_logout() {
 
     return 0;
 }
-
-
 
 // =====================
 //   CHATS команды
@@ -267,11 +312,103 @@ int TgClientFacade::handle_chat_info(const std::string& chat_id) {
     return 0;
 }
 
+// =====================
+//   HISTORY команды
+// =====================
 
+int TgClientFacade::handle_history(const std::string& chat_id, int limit) {
+    if (!auth_controller_->is_authorized()) {
+        std::cerr << "[tgcli] Not authorized. Use login-phone/login-code first.\n";
+        return 1;
+    }
+
+    try {
+        auto messages = history_controller_->get_chat_history(chat_id, limit);
+        
+        if (messages.empty()) {
+            std::cout << "[tgcli] No messages found in chat: " << chat_id << "\n";
+            return 0;
+        }
+        
+        std::cout << "[tgcli] History for chat " << chat_id 
+                  << " (" << messages.size() << " messages):\n";
+        std::cout << "========================================\n";
+        
+        for (const auto& msg : messages) {
+            std::cout << "[" << msg.sender << "]: " << msg.text << "\n";
+        }
+        
+        std::cout << "========================================\n";
+        
+    } catch (const std::exception& e) {
+        std::cerr << "[tgcli] history error: " << e.what() << "\n";
+        return 1;
+    }
+
+    return 0;
+}
+
+int TgClientFacade::handle_set_target_chat(const std::string& chat_id) {
+    if (!auth_controller_->is_authorized()) {
+        std::cerr << "[tgcli] Not authorized. Use login-phone/login-code first.\n";
+        return 1;
+    }
+
+    try {
+        history_controller_->set_target_chat_id(chat_id);
+        
+        // Проверим, существует ли такой чат
+        auto chat = chats_controller_->get_chat_info(chat_id);
+        if (chat.chatId.empty()) {
+            std::cout << "[tgcli] Warning: chat " << chat_id 
+                      << " not found, but target set anyway\n";
+        } else {
+            std::cout << "[tgcli] Target chat set to: " << chat.title 
+                      << " (" << chat_id << ")\n";
+        }
+        
+    } catch (const std::exception& e) {
+        std::cerr << "[tgcli] set-target error: " << e.what() << "\n";
+        return 1;
+    }
+
+    return 0;
+}
+
+int TgClientFacade::handle_get_target_history(int limit) {
+    if (!auth_controller_->is_authorized()) {
+        std::cerr << "[tgcli] Not authorized. Use login-phone/login-code first.\n";
+        return 1;
+    }
+
+    try {
+        auto messages = history_controller_->get_target_chat_history(limit);
+        
+        if (messages.empty()) {
+            std::cout << "[tgcli] No messages in target chat or target not set\n";
+            return 0;
+        }
+        
+        std::cout << "[tgcli] Target chat history (" << messages.size() << " messages):\n";
+        std::cout << "========================================\n";
+        
+        for (const auto& msg : messages) {
+            std::cout << "[" << msg.sender << "]: " << msg.text << "\n";
+        }
+        
+        std::cout << "========================================\n";
+        
+    } catch (const std::exception& e) {
+        std::cerr << "[tgcli] get-target-history error: " << e.what() << "\n";
+        return 1;
+    }
+
+    return 0;
+}
 
 
 // =====================
-//   send
+//   SEND команда 
 // =====================
 
 int TgClientFacade::handle_send(const std::string& chat_id,
@@ -282,13 +419,19 @@ int TgClientFacade::handle_send(const std::string& chat_id,
     }
 
     try {
-        // пока бьем прямо в ITgClient, контроллер для send можно добавить потом
-        client_.send_message(chat_id, message);
+        bool success = message_controller_->send_message(chat_id, message);
+        
+        if (success) {
+            std::cout << "[tgcli] Message sent to chat " << chat_id << "\n";
+            return 0;
+        } else {
+            std::cerr << "[tgcli] Failed to send message: " 
+                      << message_controller_->get_last_error() << "\n";
+            return 1;
+        }
+        
     } catch (const std::exception& e) {
         std::cerr << "[tgcli] send error: " << e.what() << "\n";
         return 1;
     }
-
-    std::cout << "[tgcli] Message sent to chat " << chat_id << "\n";
-    return 0;
 }
