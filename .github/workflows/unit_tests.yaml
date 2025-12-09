@@ -29,8 +29,6 @@ jobs:
         with:
           path: third_party/td/tdlib
           key: tdlib-${{ hashFiles('third_party/td/**') }}
-          restore-keys: |
-            tdlib-
 
       - name: Build TDLib (only if cache missed)
         if: steps.cache-tdlib.outputs.cache-hit != 'true'
