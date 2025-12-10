@@ -158,57 +158,6 @@ ITgClient::Chat ChatsController::get_chat_info(const std::string& chat_id) {
     return ITgClient::Chat{"", ""};
 }
 
-std::string ChatsController::get_chat_title(const std::string& chat_id) {
-    if (chat_id.empty()) {
-        return "";
-    }
-    
-    auto it = chat_titles_.find(chat_id);
-    if (it != chat_titles_.end()) {
-        return it->second;
-    }
-    
-    for (const auto& chat : cached_chats_) {
-        if (chat.chatId == chat_id) {
-            chat_titles_[chat_id] = chat.title;
-            return chat.title;
-        }
-    }
-    
-    refresh_chats();
-    
-    for (const auto& chat : cached_chats_) {
-        if (chat.chatId == chat_id) {
-            chat_titles_[chat_id] = chat.title;
-            return chat.title;
-        }
-    }
-    
-    return "Unknown chat";
-}
-
-std::string ChatsController::get_chat_id_by_title(const std::string& title) {
-    if (title.empty()) {
-        return "";
-    }
-    
-    for (const auto& chat : cached_chats_) {
-        if (chat.title == title) {
-            return chat.chatId;
-        }
-    }
-    
-    refresh_chats();
-    
-    for (const auto& chat : cached_chats_) {
-        if (chat.title == title) {
-            return chat.chatId;
-        }
-    }
-    
-    return "";
-}
-
 bool ChatsController::chat_exists(const std::string& chat_id) {
     if (chat_id.empty()) {
         return false;
@@ -221,14 +170,6 @@ bool ChatsController::chat_exists(const std::string& chat_id) {
     }
     
     return false;
-}
-
-size_t ChatsController::get_chats_count() const {
-    return cached_chats_.size();
-}
-
-time_t ChatsController::get_last_update_time() const {
-    return last_cache_update_;
 }
 
 void ChatsController::clear_cache() {

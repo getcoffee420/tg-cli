@@ -16,6 +16,7 @@ TgClientFacade::TgClientFacade(ITgClient& client) : client_(client) {
     auth_controller_ = std::make_unique<AuthController>(client_);
     chats_controller_ = std::make_unique<ChatsController>(client_);
     history_controller_ = std::make_unique<ChatHistoryController>(client_);
+    message_controller_ = std::make_unique<MessageController>(client_);
 }
 
 std::string TgClientFacade::auth_state_to_string(ITgClient::AuthState state) {
@@ -82,7 +83,15 @@ int TgClientFacade::run(int argc, char** argv) {
         } else if (command == "logout") {
             return handle_logout();
         } else if (command == "chats") {
-            return handle_get_chats();
+            int limit = 20;
+            try {
+                if (argc < 3) {
+                    limit = std::stoi(argv[2]);
+                } 
+            } catch (...) {
+                std::cerr << "[tgcli] Invalid limit, using default 20\n";
+            }
+            return handle_get_chats(limit); 
         } else if (command == "search-chats") {
             if (argc < 3) {
                 std::cerr << "[tgcli] search-chats: query is required\n";
@@ -217,14 +226,14 @@ int TgClientFacade::handle_logout() {
 //   CHATS команды
 // =====================
 
-int TgClientFacade::handle_get_chats() {
+int TgClientFacade::handle_get_chats(int limit = 20) {
     if (!auth_controller_->is_authorized()) {
         std::cerr << "[tgcli] Not authorized. Use login-phone/login-code first.\n";
         return 1;
     }
 
     try {
-        auto chats = chats_controller_->get_chats(50);
+        auto chats = chats_controller_->get_chats(limit);
         
         if (chats.empty()) {
             std::cout << "[tgcli] No chats found\n";
@@ -258,7 +267,7 @@ int TgClientFacade::handle_search_chats(const std::string& query) {
     }
 
     try {
-        auto chats = chats_controller_->search_chats(query, 20);
+        auto chats = chats_controller_->search_chats(query, 50);
         
         if (chats.empty()) {
             std::cout << "[tgcli] No chats found for query: " << query << "\n";

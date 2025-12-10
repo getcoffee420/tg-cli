@@ -23,7 +23,7 @@ private:
 
     int handle_send(const std::string& chat_id, const std::string& message);
 
-    int handle_get_chats();
+    int handle_get_chats(int limit);
     int handle_search_chats(const std::string& query);
     int handle_chat_info(const std::string& chat_id);
 
