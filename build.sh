@@ -27,6 +27,3 @@ cmake --build . --target install
 
 # Return to project root
 cd ../../..
-
-# --- Run cmake in project root ---
-cmake .

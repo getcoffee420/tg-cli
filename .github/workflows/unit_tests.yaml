@@ -7,7 +7,7 @@ on:
 
 jobs:
   build-tdlib:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     outputs:
       tdlib-dir: ${{ steps.cache-tdlib.outputs.dir }}
 
@@ -20,8 +20,8 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt update
-          sudo apt install -y make git zlib1g-dev libssl-dev gperf php-cli cmake \
-                              clang-14 libc++-14-dev libc++abi-14-dev
+          sudo apt-get install make git zlib1g-dev libssl-dev gperf php-cli \
+                               cmake clang-18 libc++-18-dev libc++abi-18-dev
 
       - name: Cache TDLib build
         id: cache-tdlib
@@ -39,12 +39,9 @@ jobs:
           rm -rf build
           mkdir build
           cd build
-
-          CXXFLAGS="-stdlib=libc++" CC=/usr/bin/clang-14 CXX=/usr/bin/clang++-14 cmake \
+          CXXFLAGS="-stdlib=libc++" CC=/usr/bin/clang-18 CXX=/usr/bin/clang++-18 cmake \
           -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX:PATH=../tdlib ..
-          cmake -DCMAKE_BUILD_TYPE=Release \
-                -DCMAKE_INSTALL_PREFIX:PATH=../tdlib ..
-
+          
           cmake --build . --target install -j$(nproc)
 
       - name: Upload TDLib artifact
@@ -56,7 +53,7 @@ jobs:
 
 
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: build-tdlib
 
     steps:
@@ -65,10 +62,15 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Create .env file
+        run: |
+          echo "API_ID=${{ secrets.API_ID }}" >> .env
+          echo "API_HASH=${{ secrets.API_HASH }}" >> .env
+
       - name: Install dependencies
         run: |
           sudo apt update
-          sudo apt install -y cmake clang-14 libc++-14-dev libc++abi-14-dev
+          sudo apt install -y cmake clang-18 libc++-18-dev libc++abi-18-dev
 
       - name: Download TDLib artifact
         uses: actions/download-artifact@v4
@@ -78,6 +80,9 @@ jobs:
 
       - name: Configure CMake
         run: |
+          CC=/usr/bin/clang-18 \
+          CXX=/usr/bin/clang++-18 \
+          CXXFLAGS="-stdlib=libc++" \
           cmake -S . -B cmake-build-debug
 
       - name: Build
@@ -91,7 +96,7 @@ jobs:
 
 
   run-tests:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: build
 
     steps:
@@ -103,7 +108,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt update
-          sudo apt install -y cmake clang-14 libc++-14-dev libc++abi-14-dev
+          sudo apt install -y cmake clang-18 libc++-18-dev libc++abi-18-dev
 
       - name: Download TDLib
         uses: actions/download-artifact@v4

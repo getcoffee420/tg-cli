@@ -1,32 +1,25 @@
+#include "../src/tgClient/ITgClient.hpp"
+#include "../src/tgClient/TgClientTdlib.hpp"
 #include <iostream>
-#include <td/telegram/td_json_client.h>
 
 int main() {
-    std::cout << "Starting TDLib test...\n";
+    TgClientTdlib a = TgClientTdlib();
+    auto temp = a.check_status();
 
-    void *client = td_json_client_create();
-    if (!client) {
-        std::cerr << "Failed to create TDLib client\n";
-        return 1;
-    }
-
-    const char *query = R"({
-        "@type": "getOption",
-        "name": "version"
-    })";
-
-    td_json_client_send(client, query);
-
-    const double timeout = 10.0;
-    const char *result = td_json_client_receive(client, timeout);
-
-    if (result) {
-        std::cout << "Received: " << result << '\n';
-    } else {
-        std::cout << "No response within " << timeout << " seconds\n";
-    }
-
-    td_json_client_destroy(client);
-    std::cout << "Done.\n";
-    return 0;
+    std::cout << "waitingPhone " << (temp == TgClientTdlib::AuthState::WaitingPhone) << std::endl;
+    std::cout << "WaitingCode " << (temp == TgClientTdlib::AuthState::WaitingCode) << std::endl;
+    std::cout << "WaitingPassword " << (temp == TgClientTdlib::AuthState::WaitingPassword) << std::endl;
+    std::cout << "WaitingParameters " << (temp == TgClientTdlib::AuthState::WaitingTdlibParameters) << std::endl;
+    std::cout << "Ready " << (temp == TgClientTdlib::AuthState::Ready) << std::endl;
+    std::cout << "LogginOut " << (temp == TgClientTdlib::AuthState::LoggingOut) << std::endl;
+    std::cout << "error " << (temp == TgClientTdlib::AuthState::Error) << std::endl;
+    enum class AuthState {
+        WaitingPhone,
+        WaitingCode,
+        WaitingPassword,
+        WaitingTdlibParameters,
+        Ready,
+        LoggingOut,
+        Error,
+    };
 }
