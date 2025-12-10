@@ -2,23 +2,21 @@
 #include "SendMessageController.h"
 #include <iostream>
 #include <stdexcept>
+#include <algorithm>
 
 MessageController::MessageController(ITgClient& client)
     : client_(client)
     , last_error_("") {}
 
-// Отправить сообщение
 bool MessageController::send_message(const std::string& chat_id, 
                                     const std::string& text) {
     clear_error();
-    
-    // 1. Валидация
+
     if (chat_id.empty()) {
         handle_error("Chat ID cannot be empty");
         return false;
     }
     
-    // 2. Отправка
     try {
         client_.send_message(chat_id, text);
         std::cout << "[MessageController] Message sent to chat " << chat_id << "\n";
@@ -30,7 +28,6 @@ bool MessageController::send_message(const std::string& chat_id,
     }
 }
 
-// Получить последнюю ошибку
 const std::string& MessageController::get_last_error() const {
     return last_error_;
 }
