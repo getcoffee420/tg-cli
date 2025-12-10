@@ -57,6 +57,8 @@ add_library(tg-cli-lib
         src/controllers/AuthController.cpp
         src/controllers/GetChatsController.cpp
         src/controllers/SendMessageController.cpp
+        src/controllers/ChatHistoryController.cpp
+        src/facade/TgClientFacade.cpp
 )
 
 target_include_directories(tg-cli-lib
