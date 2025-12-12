@@ -59,6 +59,8 @@ add_library(tg-cli-lib
         src/controllers/SendMessageController.cpp
         src/controllers/ChatHistoryController.cpp
         src/facade/TgClientFacade.cpp
+        src/label/LabelsParser.cpp
+        src/label/LabelsParser.h
 )
 
 target_include_directories(tg-cli-lib
@@ -108,6 +110,7 @@ target_link_libraries(core_test
 # TEST
 add_executable(tests tests/test.cpp
         tests/label/Label.cpp
+        tests/label/LabelParserTest.cpp
 )
 
 target_include_directories(tests
