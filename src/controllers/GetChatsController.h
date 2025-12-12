@@ -30,6 +30,8 @@ public:
         const std::string& query,
         int limit = 10
     );
+
+    std::string get_chat_title(const std::string &chat_id);
     
     ITgClient::Chat get_chat_info(const std::string& chat_id);
 
@@ -44,6 +46,6 @@ private:
     
     void handle_error(const std::string& error);
     void clear_error();
-    void update_cache(const std::vector<ITgClient::Chat>& chats);
+    void update_cache(const std::vector<ITgClient::Chat> &chats);
     bool should_refresh_cache() const;
 };

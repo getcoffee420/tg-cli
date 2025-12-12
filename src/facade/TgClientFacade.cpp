@@ -47,8 +47,6 @@ void TgClientFacade::print_usage() {
         << "  tgcli search-chats <query>\n"
         << "  tgcli chat-info <chat_id>\n"
         << "  tgcli history <chat_id> [limit]\n"
-        << "  tgcli set-target <chat_id>\n"
-        << "  tgcli get-target-history [limit]\n"
         << "  tgcli send <chat_id> <message...>\n"
         << std::endl;
 }
@@ -118,24 +116,10 @@ int TgClientFacade::run(int argc, char** argv) {
                 }
             }
             auto x = client_.get_chat_history(argv[2], limit);
-            std::this_thread::sleep_for(std::chrono::milliseconds(300));
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000)); // you saw nothing...
+
             return handle_history(argv[2], limit);
-        } else if (command == "set-target") {
-            if (argc < 3) {
-                std::cerr << "[tgcli] set-target: chat_id is required\n";
-                return 1;
-            }
-            return handle_set_target_chat(argv[2]);
-        } else if (command == "get-target-history") {
-            int limit = 20;
-            if (argc >= 3) {
-                try {
-                    limit = std::stoi(argv[2]);
-                } catch (...) {
-                    std::cerr << "[tgcli] Invalid limit, using default 20\n";
-                }
-            }
-            return handle_get_target_history(limit);
+
         } else if (command == "send") {
             if (argc < 4) {
                 std::cerr << "[tgcli] send: not enough arguments\n";
@@ -346,7 +330,7 @@ int TgClientFacade::handle_history(const std::string& chat_id, int limit) {
         std::cout << "========================================\n";
         
         for (const auto& msg : messages) {
-            std::cout << "[" << msg.sender << "]: " << msg.text << "\n";
+            std::cout << "[" << chats_controller_->get_chat_title(msg.sender) << "] " << "(" << msg.messageID << "): " << msg.text << "\n";
         }
         
         std::cout << "========================================\n";
@@ -358,65 +342,6 @@ int TgClientFacade::handle_history(const std::string& chat_id, int limit) {
 
     return 0;
 }
-
-int TgClientFacade::handle_set_target_chat(const std::string& chat_id) {
-    if (!auth_controller_->is_authorized()) {
-        std::cerr << "[tgcli] Not authorized. Use login-phone/login-code first.\n";
-        return 1;
-    }
-
-    try {
-        history_controller_->set_target_chat_id(chat_id);
-        
-        // Проверим, существует ли такой чат
-        auto chat = chats_controller_->get_chat_info(chat_id);
-        if (chat.chatId.empty()) {
-            std::cout << "[tgcli] Warning: chat " << chat_id 
-                      << " not found, but target set anyway\n";
-        } else {
-            std::cout << "[tgcli] Target chat set to: " << chat.title 
-                      << " (" << chat_id << ")\n";
-        }
-        
-    } catch (const std::exception& e) {
-        std::cerr << "[tgcli] set-target error: " << e.what() << "\n";
-        return 1;
-    }
-
-    return 0;
-}
-
-int TgClientFacade::handle_get_target_history(int limit) {
-    if (!auth_controller_->is_authorized()) {
-        std::cerr << "[tgcli] Not authorized. Use login-phone/login-code first.\n";
-        return 1;
-    }
-
-    try {
-        auto messages = history_controller_->get_target_chat_history(limit);
-        
-        if (messages.empty()) {
-            std::cout << "[tgcli] No messages in target chat or target not set\n";
-            return 0;
-        }
-        
-        std::cout << "[tgcli] Target chat history (" << messages.size() << " messages):\n";
-        std::cout << "========================================\n";
-        
-        for (const auto& msg : messages) {
-            std::cout << "[" << msg.sender << "]: " << msg.text << "\n";
-        }
-        
-        std::cout << "========================================\n";
-        
-    } catch (const std::exception& e) {
-        std::cerr << "[tgcli] get-target-history error: " << e.what() << "\n";
-        return 1;
-    }
-
-    return 0;
-}
-
 
 // =====================
 //   SEND команда 
