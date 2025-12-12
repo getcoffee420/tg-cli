@@ -7,6 +7,6 @@
 #include <string>
 #include <vector>
 
-std::vector<std::string> generate_labels(const size_t number);
+std::vector<std::string> generate_labels(size_t number);
 
 #endif //TG_CLI_LABEL_H
