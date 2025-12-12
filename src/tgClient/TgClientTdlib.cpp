@@ -152,27 +152,31 @@ std::vector<ITgClient::Chat> TgClientTdlib::get_chats(int limit) {
 }
 
 std::vector<ITgClient::Message> TgClientTdlib::get_chat_history(std::string chatID, int limit) {
-    std::vector<BaseMessage> result;
-
+    std::vector<ITgClient::Message> result;
     std::int64_t chat_id = 0;
     try {
         chat_id = std::stoll(chatID);
     } catch (...) {
         return result;
     }
+    if (limit <= 0) return result;
+    if (limit > 100) limit = 100;
+    const std::int64_t from_message_id = 0;
+    const std::int32_t offset = 0;
+    const bool only_local = false;
 
-    auto req = td_api::make_object<td_api::getChatHistory>();
-    req->chat_id_ = chat_id;
-    req->from_message_id_ = 0;
-    req->offset_ = 0;
-    req->limit_ = limit;
-    req->only_local_ = false;
+    auto req = td_api::make_object<td_api::getChatHistory>(
+        chat_id,
+        from_message_id,
+        offset,
+        static_cast<std::int32_t>(limit),
+        only_local
+    );
 
     auto id = send_query(std::move(req));
     auto obj = wait_result(id, 10.0);
-    if (!obj) {
-        return result;
-    }
+    if (!obj) return result;
+
     if (obj->get_id() == td_api::error::ID) {
         auto err = td::move_tl_object_as<td_api::error>(obj);
         std::cerr << "get_chat_history error: " << to_string(err) << std::endl;
@@ -183,19 +187,17 @@ std::vector<ITgClient::Message> TgClientTdlib::get_chat_history(std::string chat
     result.reserve(msgs->messages_.size());
 
     for (auto &msg_ptr : msgs->messages_) {
-        if (!msg_ptr) {
-            continue;
-        }
+        if (!msg_ptr) continue;
 
-        BaseMessage m;
+        ITgClient::Message m{};
         m.chatId = chatID;
+        m.messageID = std::to_string(msg_ptr->id_);
+        m.sender.clear();
         m.text.clear();
 
         if (msg_ptr->content_ && msg_ptr->content_->get_id() == td_api::messageText::ID) {
             auto &content = static_cast<td_api::messageText &>(*msg_ptr->content_);
-            if (content.text_) {
-                m.text = content.text_->text_;
-            }
+            if (content.text_) m.text = content.text_->text_;
         }
 
         result.push_back(std::move(m));
@@ -203,6 +205,7 @@ std::vector<ITgClient::Message> TgClientTdlib::get_chat_history(std::string chat
 
     return result;
 }
+
 
 void TgClientTdlib::send_message(std::string chatID, std::string message) {
     std::int64_t chat_id = 0;

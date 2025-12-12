@@ -117,6 +117,8 @@ int TgClientFacade::run(int argc, char** argv) {
                     std::cerr << "[tgcli] Invalid limit, using default 20\n";
                 }
             }
+            auto x = client_.get_chat_history(argv[2], limit);
+            std::this_thread::sleep_for(std::chrono::milliseconds(300));
             return handle_history(argv[2], limit);
         } else if (command == "set-target") {
             if (argc < 3) {
