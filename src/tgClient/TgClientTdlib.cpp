@@ -190,6 +190,15 @@ std::vector<ITgClient::Message> TgClientTdlib::get_chat_history(std::string chat
         BaseMessage m;
         m.chatId = chatID;
         m.text.clear();
+        m.sender.clear();
+
+        if (msg_ptr->sender_id_->get_id() == td_api::messageSenderUser::ID) {
+            auto sender_user =
+                static_cast<td_api::messageSenderUser*>(msg_ptr->sender_id_.get());
+
+            m.sender = std::to_string(sender_user->user_id_);
+        }
+        m.messageID = std::to_string(msg_ptr->id_);
 
         if (msg_ptr->content_ && msg_ptr->content_->get_id() == td_api::messageText::ID) {
             auto &content = static_cast<td_api::messageText &>(*msg_ptr->content_);

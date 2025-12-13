@@ -6,9 +6,10 @@
 class ChatHistoryController {
 private:
     ITgClient& tgClient;
-    std::string target_chat_id;
     
 public:
+    std::string target_chat_id;
+
     explicit ChatHistoryController(ITgClient& client);
 
     ChatHistoryController(const ChatHistoryController&) = delete;

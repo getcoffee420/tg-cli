@@ -192,3 +192,33 @@ void ChatsController::handle_error(const std::string& error) {
 void ChatsController::clear_error() {
     last_error_.clear();
 }
+
+std::string ChatsController::get_chat_title(const std::string& chat_id) {
+
+    if (chat_id.empty()) {
+        return "";
+    }
+
+    auto it = chat_titles_.find(chat_id);
+
+    if (it != chat_titles_.end()) {
+        return it->second;
+    }
+
+    for (const auto& chat : cached_chats_) {
+        if (chat.chatId == chat_id) {
+            chat_titles_[chat_id] = chat.title;
+            return chat.title;
+        }
+    }
+
+    refresh_chats();
+
+    for (const auto& chat : cached_chats_) {
+        if (chat.chatId == chat_id) {
+            chat_titles_[chat_id] = chat.title;
+            return chat.title;
+        }
+    }
+    return "Unknown chat";
+}
