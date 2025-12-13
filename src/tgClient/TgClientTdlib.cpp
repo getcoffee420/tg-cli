@@ -13,7 +13,7 @@
 
 
 TgClientTdlib::TgClientTdlib() {
-    td::ClientManager::execute(td_api::make_object<td_api::setLogVerbosityLevel>(1));
+    td::ClientManager::execute(td_api::make_object<td_api::setLogVerbosityLevel>(0));
     client_manager_ = std::make_unique<td::ClientManager>();
     client_id_ = client_manager_->create_client_id();
 }
