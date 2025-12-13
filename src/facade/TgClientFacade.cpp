@@ -1,6 +1,6 @@
-#include <memory>
 #include "TgClientFacade.h"
 
+#include <memory>
 #include <iostream>
 #include <sstream>
 #include <thread>
@@ -17,6 +17,7 @@ TgClientFacade::TgClientFacade(ITgClient& client) : client_(client) {
     chats_controller_ = std::make_unique<ChatsController>(client_);
     history_controller_ = std::make_unique<ChatHistoryController>(client_);
     message_controller_ = std::make_unique<MessageController>(client_);
+    label_controller_ = std::make_unique<LabelController>("labels.txt");
 }
 
 std::string TgClientFacade::auth_state_to_string(ITgClient::AuthState state) {
@@ -45,9 +46,9 @@ void TgClientFacade::print_usage() {
         << "  tgcli logout\n"
         << "  tgcli chats\n"
         << "  tgcli search-chats <query>\n"
-        << "  tgcli chat-info <chat_id>\n"
-        << "  tgcli history <chat_id> [limit]\n"
-        << "  tgcli send <chat_id> <message...>\n"
+        << "  tgcli chat-info <chat_label_or_id>\n"
+        << "  tgcli history <chat_label_or_id> [limit]\n"
+        << "  tgcli send <chat_label_or_id> <message...>\n"
         << std::endl;
 }
 
@@ -220,7 +221,11 @@ int TgClientFacade::handle_get_chats(int limit = 20) {
 
     try {
         auto chats = chats_controller_->get_chats(limit);
-        
+
+        if (label_controller_) {
+            label_controller_->rebuild_from_chats(chats);
+        }
+
         if (chats.empty()) {
             std::cout << "[tgcli] No chats found\n";
             return 0;
@@ -231,9 +236,14 @@ int TgClientFacade::handle_get_chats(int limit = 20) {
         
         for (size_t i = 0; i < chats.size(); ++i) {
             const auto& chat = chats[i];
+            const std::string label = label_controller_ ? label_controller_->label_for_chat_id(chat.chatId)
+                                                        : std::string{};
+
             std::cout << std::setw(3) << (i + 1) << ". "
-                      << "ID: " << chat.chatId 
-                      << " | Title: " << chat.title << "\n";
+                      << "Label: " << (label.empty() ? "-" : label)
+                      << " | Title: " << chat.title
+                      << " | ID: " << chat.chatId
+                      << "\n";
         }
         
         std::cout << "========================================\n";
@@ -266,9 +276,16 @@ int TgClientFacade::handle_search_chats(const std::string& query) {
         
         for (size_t i = 0; i < chats.size(); ++i) {
             const auto& chat = chats[i];
+
+            std::string label;
+            if (label_controller_) {
+                label = label_controller_->label_for_chat_id(chat.chatId);
+            }
+
             std::cout << std::setw(3) << (i + 1) << ". "
-                      << "ID: " << chat.chatId 
-                      << " | Title: " << chat.title << "\n";
+                      << "Label: " << (label.empty() ? "-" : label)
+                      << " | Title: " << chat.title
+                      << " | ID: " << chat.chatId << "\n";
         }
         
         std::cout << "========================================\n";
@@ -288,7 +305,9 @@ int TgClientFacade::handle_chat_info(const std::string& chat_id) {
     }
 
     try {
-        auto chat = chats_controller_->get_chat_info(chat_id);
+        const std::string resolved_id = label_controller_ ? label_controller_->resolve_chat_id(chat_id)
+                                                          : chat_id;
+        auto chat = chats_controller_->get_chat_info(resolved_id);
         
         if (chat.chatId.empty()) {
             std::cerr << "[tgcli] Chat not found: " << chat_id << "\n";
@@ -296,6 +315,9 @@ int TgClientFacade::handle_chat_info(const std::string& chat_id) {
         }
         
         std::cout << "[tgcli] Chat info:\n";
+        std::cout << "  Label: "
+                  << (label_controller_ ? label_controller_->label_for_chat_id(chat.chatId) : std::string{"-"})
+                  << "\n";
         std::cout << "  ID: " << chat.chatId << "\n";
         std::cout << "  Title: " << chat.title << "\n";
         
@@ -318,7 +340,9 @@ int TgClientFacade::handle_history(const std::string& chat_id, int limit) {
     }
 
     try {
-        auto messages = history_controller_->get_chat_history(chat_id, limit);
+        const std::string resolved_id = label_controller_ ? label_controller_->resolve_chat_id(chat_id)
+                                                          : chat_id;
+        auto messages = history_controller_->get_chat_history(resolved_id, limit);
         
         if (messages.empty()) {
             std::cout << "[tgcli] No messages found in chat: " << chat_id << "\n";
@@ -355,7 +379,9 @@ int TgClientFacade::handle_send(const std::string& chat_id,
     }
 
     try {
-        bool success = message_controller_->send_message(chat_id, message);
+        const std::string resolved_id = label_controller_ ? label_controller_->resolve_chat_id(chat_id)
+                                                          : chat_id;
+        bool success = message_controller_->send_message(resolved_id, message);
         
         if (success) {
             std::cout << "[tgcli] Message sent to chat " << chat_id << "\n";
