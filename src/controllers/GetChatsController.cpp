@@ -14,16 +14,14 @@ ChatsController::ChatsController(ITgClient& client)
 std::vector<ITgClient::Chat> ChatsController::get_chats(int limit) {
     clear_error();
     
-    if (limit <= 0) {
-        limit = 10;
-    }
-    
     if (!cached_chats_.empty() && !should_refresh_cache()) {
         int return_count = std::min(static_cast<int>(cached_chats_.size()), limit);
-        return std::vector<ITgClient::Chat>(
+        auto result = std::vector<ITgClient::Chat>(
             cached_chats_.begin(),
             cached_chats_.begin() + return_count
         );
+        reverse(result.begin(), result.end());
+        return result;
     }
     
     try {
@@ -33,21 +31,11 @@ std::vector<ITgClient::Chat> ChatsController::get_chats(int limit) {
         
         std::cout << "[ChatsController] Retrieved " << chats.size() 
                   << " chats\n";
-        
+        reverse(chats.begin(), chats.end());
         return chats;
         
     } catch (const std::exception& e) {
         handle_error(std::string("Failed to get chats: ") + e.what());
-        
-        if (!cached_chats_.empty()) {
-            std::cerr << "[ChatsController] Returning cached data due to error\n";
-            int return_count = std::min(static_cast<int>(cached_chats_.size()), limit);
-            return std::vector<ITgClient::Chat>(
-                cached_chats_.begin(),
-                cached_chats_.begin() + return_count
-            );
-        }
-        
         return {};
     }
 }

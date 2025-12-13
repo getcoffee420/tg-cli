@@ -82,13 +82,17 @@ int TgClientFacade::run(int argc, char** argv) {
         } else if (command == "logout") {
             return handle_logout();
         } else if (command == "chats") {
-            int limit = 20;
+            int limit;
             try {
                 if (argc < 3) {
                     limit = std::stoi(argv[2]);
+                    if (limit <= 0) {
+                        limit = 20;
+                    }
                 } 
             } catch (...) {
                 std::cerr << "[tgcli] Invalid limit, using default 20\n";
+                limit = 20;
             }
             return handle_get_chats(limit); 
         } else if (command == "search-chats") {
@@ -116,8 +120,6 @@ int TgClientFacade::run(int argc, char** argv) {
                     std::cerr << "[tgcli] Invalid limit, using default 20\n";
                 }
             }
-            auto x = client_.get_chat_history(argv[2], limit);
-            std::this_thread::sleep_for(std::chrono::milliseconds(1000)); // you saw nothing...
 
             return handle_history(argv[2], limit);
 
@@ -213,7 +215,7 @@ int TgClientFacade::handle_logout() {
 //   CHATS команды
 // =====================
 
-int TgClientFacade::handle_get_chats(int limit = 20) {
+int TgClientFacade::handle_get_chats(int limit) {
     if (!auth_controller_->is_authorized()) {
         std::cerr << "[tgcli] Not authorized. Use login-phone/login-code first.\n";
         return 1;
@@ -343,6 +345,10 @@ int TgClientFacade::handle_history(const std::string& chat_id, int limit) {
         const std::string resolved_id = label_controller_ ? label_controller_->resolve_chat_id(chat_id)
                                                           : chat_id;
         auto messages = history_controller_->get_chat_history(resolved_id, limit);
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(800)); // you saw nothing...
+        messages = client_.get_chat_history(resolved_id, limit);
+            
         
         if (messages.empty()) {
             std::cout << "[tgcli] No messages found in chat: " << chat_id << "\n";
