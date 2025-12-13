@@ -11,9 +11,9 @@
 #include <vector>
 
 
-class LabelController {
+class LabelsController {
 public:
-    explicit LabelController(std::string filename);
+    explicit LabelsController(std::string filename);
 
     void reload();
 

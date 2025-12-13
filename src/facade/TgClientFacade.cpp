@@ -17,7 +17,7 @@ TgClientFacade::TgClientFacade(ITgClient& client) : client_(client) {
     chats_controller_ = std::make_unique<ChatsController>(client_);
     history_controller_ = std::make_unique<ChatHistoryController>(client_);
     message_controller_ = std::make_unique<MessageController>(client_);
-    label_controller_ = std::make_unique<LabelController>("labels.txt");
+    label_controller_ = std::make_unique<LabelsController>("labels.txt");
 }
 
 std::string TgClientFacade::auth_state_to_string(ITgClient::AuthState state) {

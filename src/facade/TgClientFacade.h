@@ -14,7 +14,7 @@ private:
     std::unique_ptr<MessageController> message_controller_;
     std::unique_ptr<ChatHistoryController> history_controller_;
     std::unique_ptr<ChatsController> chats_controller_;
-    std::unique_ptr<LabelController> label_controller_;
+    std::unique_ptr<LabelsController> label_controller_;
     ITgClient& client_;
 
     static std::vector<std::string> collect_args(int argc, char** argv);
