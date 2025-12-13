@@ -19,7 +19,11 @@ bool MessageController::send_message(const std::string& chat_id,
     
     try {
         client_.send_message(chat_id, text);
+
+#ifndef NDEBUG
         std::cout << "[MessageController] Message sent to chat " << chat_id << "\n";
+#endif
+
         return true;
         
     } catch (const std::exception& e) {
