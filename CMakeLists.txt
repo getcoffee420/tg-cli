@@ -58,9 +58,9 @@ add_library(tg-cli-lib
         src/controllers/GetChatsController.cpp
         src/controllers/SendMessageController.cpp
         src/controllers/ChatHistoryController.cpp
+        src/controllers/LabelsController.cpp
         src/facade/TgClientFacade.cpp
         src/label/LabelsParser.cpp
-        src/label/LabelsParser.h
 )
 
 target_include_directories(tg-cli-lib
